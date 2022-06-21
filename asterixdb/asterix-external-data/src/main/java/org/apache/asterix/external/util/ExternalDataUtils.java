@@ -175,7 +175,7 @@ public class ExternalDataUtils {
     }
 
     public static IInputStreamFactory createExternalInputStreamFactory(ILibraryManager libraryManager,
-            DataverseName dataverse, String stream) throws HyracksDataException {
+                                                                       DataverseName dataverse, String stream) throws HyracksDataException {
         try {
             String libraryName = getLibraryName(stream);
             String className = getExternalClassName(stream);
@@ -244,7 +244,7 @@ public class ExternalDataUtils {
 
     // Currently not used.
     public static IRecordReaderFactory<?> createExternalRecordReaderFactory(ILibraryManager libraryManager,
-            Map<String, String> configuration) throws AsterixException {
+                                                                            Map<String, String> configuration) throws AsterixException {
         String readerFactory = configuration.get(ExternalDataConstants.KEY_READER_FACTORY);
         if (readerFactory == null) {
             throw new AsterixException("to use " + ExternalDataConstants.EXTERNAL + " reader, the parameter "
@@ -281,7 +281,7 @@ public class ExternalDataUtils {
 
     // Currently not used.
     public static IDataParserFactory createExternalParserFactory(ILibraryManager libraryManager,
-            DataverseName dataverse, String parserFactoryName) throws AsterixException {
+                                                                 DataverseName dataverse, String parserFactoryName) throws AsterixException {
         try {
             String library = parserFactoryName.substring(0,
                     parserFactoryName.indexOf(ExternalDataConstants.EXTERNAL_LIBRARY_SEPARATOR));
@@ -421,6 +421,13 @@ public class ExternalDataUtils {
             configuration.put(ExternalDataConstants.KEY_PARSER, ExternalDataConstants.FORMAT_NOOP);
             configuration.put(ExternalDataConstants.KEY_FORMAT, ExternalDataConstants.FORMAT_PARQUET);
         }
+        if (ExternalDataConstants.INPUT_FORMAT_SHAPE.equals(inputFormat)) {
+            //Parquet supports binary-to-binary conversion. No parsing is required
+            //configuration.put(ExternalDataConstants.KEY_PARSER, ExternalDataConstants.FORMAT_NOOP);
+            configuration.put(ExternalDataConstants.KEY_FORMAT, ExternalDataConstants.FORMAT_SHAPE);
+            configuration.put(ExternalDataConstants.KEY_PARSER, ExternalDataConstants.FORMAT_SHAPE);
+
+        }
         if (!configuration.containsKey(ExternalDataConstants.KEY_PARSER)
                 && configuration.containsKey(ExternalDataConstants.KEY_FORMAT)) {
             configuration.put(ExternalDataConstants.KEY_PARSER, configuration.get(ExternalDataConstants.KEY_FORMAT));
@@ -517,7 +524,7 @@ public class ExternalDataUtils {
      * @param configuration properties
      */
     public static void validateAdapterSpecificProperties(Map<String, String> configuration, SourceLocation srcLoc,
-            IWarningCollector collector, IApplicationContext appCtx) throws CompilationException {
+                                                         IWarningCollector collector, IApplicationContext appCtx) throws CompilationException {
         String type = configuration.get(ExternalDataConstants.KEY_EXTERNAL_SOURCE_TYPE);
 
         switch (type) {
@@ -530,7 +537,7 @@ public class ExternalDataUtils {
             case ExternalDataConstants.KEY_ADAPTER_NAME_AZURE_DATA_LAKE:
                 validateAzureDataLakeProperties(configuration, srcLoc, collector, appCtx);
                 break;
-            case ExternalDataConstants.KEY_ADAPTER_NAME_GCS:
+            case KEY_ADAPTER_NAME_GCS:
                 validateProperties(configuration, srcLoc, collector);
                 break;
             default:
@@ -750,7 +757,7 @@ public class ExternalDataUtils {
      * @param datasetRecordType dataset declared type
      */
     public static void validateParquetTypeAndConfiguration(Map<String, String> properties,
-            ARecordType datasetRecordType) throws CompilationException {
+                                                           ARecordType datasetRecordType) throws CompilationException {
         if (isParquetFormat(properties)) {
             if (datasetRecordType.getFieldTypes().length != 0) {
                 throw new CompilationException(ErrorCode.UNSUPPORTED_TYPE_FOR_PARQUET, datasetRecordType.getTypeName());

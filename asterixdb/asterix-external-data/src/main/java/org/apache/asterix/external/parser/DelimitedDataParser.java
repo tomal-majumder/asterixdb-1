@@ -51,7 +51,6 @@ import org.apache.hyracks.data.std.util.ArrayBackedValueStorage;
 import org.apache.hyracks.dataflow.common.data.parsers.IValueParser;
 import org.apache.hyracks.dataflow.common.data.parsers.IValueParserFactory;
 import org.apache.hyracks.dataflow.std.file.FieldCursorForDelimitedDataParser;
-import org.apache.hyracks.util.LogRedactionUtil;
 import org.apache.hyracks.util.ParseUtil;
 
 public class DelimitedDataParser extends AbstractDataParser implements IStreamDataParser, IRecordDataParser<char[]> {
@@ -109,8 +108,7 @@ public class DelimitedDataParser extends AbstractDataParser implements IStreamDa
             fldIds[i] = recBuilder.getFieldId(name);
             if (fldIds[i] < 0) {
                 if (!recordType.isOpen()) {
-                    throw new RuntimeDataException(ErrorCode.PARSER_DELIMITED_ILLEGAL_FIELD,
-                            LogRedactionUtil.userData(name), recordType);
+                    throw new RuntimeDataException(ErrorCode.PARSER_DELIMITED_ILLEGAL_FIELD, name, recordType);
                 } else {
                     nameBuffers[i] = new ArrayBackedValueStorage();
                     str.setValue(name);

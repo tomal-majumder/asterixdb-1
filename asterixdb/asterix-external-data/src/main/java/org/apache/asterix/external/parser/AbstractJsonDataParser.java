@@ -48,7 +48,6 @@ import org.apache.asterix.runtime.exceptions.UnsupportedTypeException;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.util.ExceptionUtils;
 import org.apache.hyracks.data.std.api.IMutableValueStorage;
-import org.apache.hyracks.util.LogRedactionUtil;
 import org.apache.hyracks.util.ParseUtil;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -199,7 +198,7 @@ public abstract class AbstractJsonDataParser extends AbstractNestedDataParser<AD
 
             if (!recordType.isOpen() && fieldIndex < 0) {
                 throw new RuntimeDataException(ErrorCode.PARSER_ADM_DATA_PARSER_EXTRA_FIELD_IN_CLOSED_RECORD,
-                        LogRedactionUtil.userData(fieldName));
+                        fieldName);
             }
             valueBuffer.reset();
             nextToken();
@@ -214,8 +213,7 @@ public abstract class AbstractJsonDataParser extends AbstractNestedDataParser<AD
 
                 //fail fast if the current field is not nullable
                 if (currentToken() == ADMToken.NULL && !isNullableType(fieldType)) {
-                    throw new RuntimeDataException(ErrorCode.PARSER_EXT_DATA_PARSER_CLOSED_FIELD_NULL,
-                            LogRedactionUtil.userData(fieldName));
+                    throw new RuntimeDataException(ErrorCode.PARSER_EXT_DATA_PARSER_CLOSED_FIELD_NULL, fieldName);
                 }
 
                 nullBitMap.set(fieldIndex);

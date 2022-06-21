@@ -36,6 +36,8 @@ import org.apache.asterix.external.indexing.IndexingScheduler;
 import org.apache.asterix.external.input.record.reader.IndexingStreamRecordReader;
 import org.apache.asterix.external.input.record.reader.hdfs.HDFSRecordReader;
 import org.apache.asterix.external.input.record.reader.hdfs.parquet.ParquetFileRecordReader;
+import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.ShapeFileRecordReader;
+import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.Writable.PointWritable;
 import org.apache.asterix.external.input.record.reader.stream.StreamRecordReader;
 import org.apache.asterix.external.input.stream.HDFSInputStream;
 import org.apache.asterix.external.provider.ExternalIndexerProvider;
@@ -43,6 +45,7 @@ import org.apache.asterix.external.provider.StreamRecordReaderProvider;
 import org.apache.asterix.external.util.ExternalDataConstants;
 import org.apache.asterix.external.util.ExternalDataUtils;
 import org.apache.asterix.external.util.HDFSUtils;
+import org.apache.asterix.om.types.ARecordType;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
@@ -83,14 +86,16 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
     private InputSplit[] inputSplits;
     private String nodeName;
     private Class recordReaderClazz;
-
+    private ARecordType recType;
     @Override
     public void configure(IServiceContext serviceCtx, Map<String, String> configuration,
-            IWarningCollector warningCollector) throws AlgebricksException, HyracksDataException {
+                          IWarningCollector warningCollector) throws AlgebricksException, HyracksDataException {
         JobConf hdfsConf = createHdfsConf(serviceCtx, configuration);
         configureHdfsConf(hdfsConf, configuration);
     }
-
+    public void setRecordType(ARecordType recordType){
+        this.recType=recordType;
+    }
     protected JobConf createHdfsConf(IServiceContext serviceCtx, Map<String, String> configuration)
             throws HyracksDataException {
         this.serviceCtx = serviceCtx;
@@ -126,7 +131,11 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
                 reader.close();
             } else if (formatString.equals(ExternalDataConstants.FORMAT_PARQUET)) {
                 recordClass = IValueReference.class;
-            } else {
+            }
+            else if(formatString.equals((ExternalDataConstants.FORMAT_SHAPE))){
+                recordClass= IValueReference.class;
+            }
+            else {
                 recordReaderClazz = StreamRecordReaderProvider.getRecordReaderClazz(configuration);
                 this.recordClass = char[].class;
             }
@@ -217,7 +226,8 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
      * HDFS Datasource is a special case in two ways:
      * 1. It supports indexing.
      * 2. It returns input as a set of writable object that we sometimes internally transform into a byte stream
-     * Hence, it can produce:
+     * Hence, i
+     * t can produce:
      * 1. StreamRecordReader: When we transform the input into a byte stream.
      * 2. Indexing Stream Record Reader: When we transform the input into a byte stream and perform indexing.
      * 3. HDFS Record Reader: When we simply pass the Writable object as it is to the parser.
@@ -240,7 +250,7 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
             JobConf readerConf = conf;
             if (ctx.getWarningCollector().shouldWarn()
                     && configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT.trim())
-                            .equals(ExternalDataConstants.INPUT_FORMAT_PARQUET)) {
+                    .equals(ExternalDataConstants.INPUT_FORMAT_PARQUET)) {
                 /*
                  * JobConf is used to pass warnings from the ParquetReadSupport to ParquetReader. As multiple
                  * partitions can issue different warnings, we might have a race condition on JobConf. Thus, we
@@ -249,7 +259,7 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
                 readerConf = confFactory.getConf();
             }
             return createRecordReader(configuration, read, inputSplits, readSchedule, nodeName, readerConf, files,
-                    indexer, ctx.getWarningCollector());
+                    indexer, ctx.getWarningCollector(),recType);
         } catch (Exception e) {
             throw HyracksDataException.create(e);
         }
@@ -276,12 +286,18 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
     }
 
     private static IRecordReader<? extends Object> createRecordReader(Map<String, String> configuration, boolean[] read,
-            InputSplit[] inputSplits, String[] readSchedule, String nodeName, JobConf conf, List<ExternalFile> files,
-            IExternalIndexer indexer, IWarningCollector warningCollector) throws IOException {
+                                                                      InputSplit[] inputSplits, String[] readSchedule, String nodeName, JobConf conf, List<ExternalFile> files,
+                                                                      IExternalIndexer indexer, IWarningCollector warningCollector, ARecordType recType) throws IOException {
         if (configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT.trim())
                 .equals(ExternalDataConstants.INPUT_FORMAT_PARQUET)) {
             return new ParquetFileRecordReader<>(read, inputSplits, readSchedule, nodeName, conf, warningCollector);
-        } else {
+        }
+        else if(configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT.trim())
+                .equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)){
+            return new ShapeFileRecordReader<>(read, inputSplits, readSchedule, nodeName, conf, warningCollector,recType);
+
+        }
+        else {
             return new HDFSRecordReader<>(read, inputSplits, readSchedule, nodeName, conf, files, indexer);
         }
     }
