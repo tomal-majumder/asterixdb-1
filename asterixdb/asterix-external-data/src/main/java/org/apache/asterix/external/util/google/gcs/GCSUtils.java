@@ -24,7 +24,6 @@ import static org.apache.asterix.external.util.ExternalDataConstants.KEY_FORMAT;
 import static org.apache.asterix.external.util.ExternalDataUtils.getPrefix;
 import static org.apache.asterix.external.util.ExternalDataUtils.isParquetFormat;
 import static org.apache.asterix.external.util.ExternalDataUtils.validateIncludeExclude;
-import static org.apache.asterix.external.util.google.gcs.GCSConstants.ENDPOINT_FIELD_NAME;
 import static org.apache.asterix.external.util.google.gcs.GCSConstants.JSON_CREDENTIALS_FIELD_NAME;
 import static org.apache.hyracks.api.util.ExceptionUtils.getMessageOrToString;
 
@@ -64,7 +63,6 @@ public class GCSUtils {
      */
     public static Storage buildClient(Map<String, String> configuration) throws CompilationException {
         String jsonCredentials = configuration.get(JSON_CREDENTIALS_FIELD_NAME);
-        String endpoint = configuration.get(ENDPOINT_FIELD_NAME);
 
         StorageOptions.Builder builder = StorageOptions.newBuilder();
 
@@ -75,10 +73,6 @@ public class GCSUtils {
             } catch (IOException ex) {
                 throw new CompilationException(EXTERNAL_SOURCE_ERROR, getMessageOrToString(ex));
             }
-        }
-
-        if (endpoint != null) {
-            builder.setHost(endpoint);
         }
 
         return builder.build().getService();

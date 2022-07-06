@@ -55,7 +55,6 @@ import org.apache.asterix.runtime.operators.file.adm.AdmLexer.TokenImage;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.data.std.api.IMutableValueStorage;
 import org.apache.hyracks.data.std.util.ArrayBackedValueStorage;
-import org.apache.hyracks.util.LogRedactionUtil;
 
 /**
  * Parser for ADM formatted data.
@@ -473,7 +472,7 @@ public class ADMDataParser extends AbstractDataParser implements IStreamDataPars
                         fieldId = recBuilder.getFieldId(fldName);
                         if ((fieldId < 0) && !recType.isOpen()) {
                             throw new ParseException(ErrorCode.PARSER_ADM_DATA_PARSER_EXTRA_FIELD_IN_CLOSED_RECORD,
-                                    LogRedactionUtil.userData(fldName));
+                                    fldName);
                         } else if ((fieldId < 0) && recType.isOpen()) {
                             parseString(tmpTokenImage.getBuffer(), tmpTokenImage.getBegin() + 1,
                                     tmpTokenImage.getLength() - 2, fieldNameBuffer.getDataOutput());
@@ -528,7 +527,7 @@ public class ADMDataParser extends AbstractDataParser implements IStreamDataPars
             final int nullableFieldId = checkOptionalConstraints(recType, nulls);
             if (nullableFieldId != -1) {
                 throw new ParseException(ErrorCode.PARSER_ADM_DATA_PARSER_FIELD_NOT_NULL,
-                        LogRedactionUtil.userData(recType.getFieldNames()[nullableFieldId]));
+                        recType.getFieldNames()[nullableFieldId]);
             }
         }
         recBuilder.write(out, true);
