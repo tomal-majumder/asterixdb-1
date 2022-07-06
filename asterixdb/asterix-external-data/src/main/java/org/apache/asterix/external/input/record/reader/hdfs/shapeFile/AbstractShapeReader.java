@@ -62,6 +62,28 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
                 m_keys.add(new Text(field.fieldName));
             }
 
+
+
+             /*
+            ZipInputStream zis = new ZipInputStream(m_shpStream);
+            ZipEntry zipEntry = zis.getNextEntry();
+            while (zipEntry != null) {
+                long s = zipEntry.getSize();
+                zipEntry = zis.getNextEntry();
+            }
+
+            ZipFile zipFile = new ZipFile(path.toString());
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while(entries.hasMoreElements()){
+                ZipEntry entry = entries.nextElement();
+                if(entry.getName().toLowerCase().endsWith(".shp"))
+                    m_shpStream=new DataInputStream(zipFile.getInputStream(entry));
+                if(entry.getName().toLowerCase().endsWith(".dbf"))
+                    m_dfbStream=new DataInputStream(zipFile.getInputStream(entry));
+                //InputStream stream = zipFile.getInputStream(entry);
+            }
+        }*/
+
         }
         else
         {

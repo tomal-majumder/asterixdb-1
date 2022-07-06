@@ -42,6 +42,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
     public RecordReader<Void, VoidPointable> getRecordReader(InputSplit inputSplit, JobConf conf, Reporter reporter) throws IOException {
         try {
             return new ShapeFileReader(inputSplit, conf, reporter, recordType, requestedFields);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -51,9 +52,11 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
     public void setRecordType(ARecordType type){
         this.recordType=type;
     }
+
     public void setRequestedFields(String requestedFields){
         this.requestedFields = requestedFields;
     }
+
 
     private static final class ShapeFileReader extends AbstractShapeReader<VoidPointable>
     {
@@ -91,7 +94,6 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 }
             }
 
-            
         }
 
 
@@ -164,6 +166,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                         throw new IllegalStateException("Defined type and Parsed Type do not match");
 
                 }
+
 
             }
 
@@ -265,6 +268,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 else{
                     return false;
                 }
+
             }
 
             ArrayBackedValueStorage valueContainer=new ArrayBackedValueStorage();
