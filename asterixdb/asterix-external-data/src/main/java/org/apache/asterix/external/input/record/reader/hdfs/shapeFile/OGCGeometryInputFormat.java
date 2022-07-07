@@ -38,10 +38,12 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 {
     private ARecordType recordType;
     private String requestedFields;
+    private String filterMBRInfo;
+
     @Override
     public RecordReader<Void, VoidPointable> getRecordReader(InputSplit inputSplit, JobConf conf, Reporter reporter) throws IOException {
         try {
-            return new ShapeFileReader(inputSplit, conf, reporter, recordType, requestedFields);
+            return new ShapeFileReader(inputSplit, conf, reporter, recordType, requestedFields, filterMBRInfo);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -52,25 +54,33 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
     public void setRecordType(ARecordType type){
         this.recordType=type;
     }
-
     public void setRequestedFields(String requestedFields){
         this.requestedFields = requestedFields;
     }
-
+    public void setFilterMBRInfo(String filterMBRInfo){
+        this.filterMBRInfo = filterMBRInfo;
+    }
 
     private static final class ShapeFileReader extends AbstractShapeReader<VoidPointable>
     {
-        RecordBuilder builder;
-        private ARecordType recordType;
-        private boolean readGeometryField;
-        private boolean readDBFFields;
+        private final RecordBuilder builder;
+        private final ARecordType recordType;
+        private final boolean readGeometryField;
+        private final boolean readDBFFields;
+        private final String filterMBRInfo;
+
+        private double filterXmin;
+        private double filterYMin;
+        private double filterXmax;
+        private double filterYmax;
         public ShapeFileReader(
                 InputSplit inputSplit,
-                JobConf conf, Reporter reporter, ARecordType recordType, String requestedFields) throws IOException, InterruptedException
+                JobConf conf, Reporter reporter, ARecordType recordType, String requestedFields, String filterMBRInfo) throws IOException, InterruptedException
         {
             super(inputSplit,conf,reporter);
             this.recordType = recordType;
             builder = new RecordBuilder();
+            this.filterMBRInfo = filterMBRInfo;
             if(requestedFields == null){
                 readGeometryField = true;
                 readDBFFields = true;
@@ -92,6 +102,13 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     else
                         readDBFFields = false;
                 }
+            }
+            if(filterMBRInfo != null){
+                String[] coordinates = filterMBRInfo.split(",");
+                filterXmin = Double.parseDouble(coordinates[0]);
+                filterYMin = Double.parseDouble(coordinates[1]);
+                filterXmax = Double.parseDouble(coordinates[2]);
+                filterYmax = Double.parseDouble(coordinates[3]);
             }
 
         }

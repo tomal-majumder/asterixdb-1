@@ -20,14 +20,15 @@ public class ShapeFileRecordReader<V extends IValueReference> extends AbstractHD
 
 
     public ShapeFileRecordReader(boolean[] read, InputSplit[] inputSplits, String[] readSchedule, String nodeName,
-                                 JobConf conf, IWarningCollector warningCollector, ARecordType recType, String requestedFields) {
+                                 JobConf conf, IWarningCollector warningCollector, ARecordType recType, String requestedFields, String filterMBRInfo) {
         super(read, inputSplits, readSchedule, nodeName, new ValueReferenceRecord<>(), conf);
         this.warningCollector = warningCollector;
         this.recType=recType;
         if(inputFormat instanceof OGCGeometryInputFormat){
             ((OGCGeometryInputFormat)inputFormat).setRecordType(recType);
-
             ((OGCGeometryInputFormat)inputFormat).setRequestedFields(requestedFields);
+            ((OGCGeometryInputFormat)inputFormat).setFilterMBRInfo(filterMBRInfo);
+
         }
 
     }

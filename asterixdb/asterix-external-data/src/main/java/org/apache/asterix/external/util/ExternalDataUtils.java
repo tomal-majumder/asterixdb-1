@@ -787,6 +787,7 @@ public class ExternalDataUtils {
         if(properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)){
             String[] fields = projectionInfo.getProjectionInfo().getFieldNames();
             properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS ,String.join(",", fields));
+            properties.put(ExternalDataConstants.KEY_FILTER_PUSHDOWN_MBR, projectionInfo.getFilterMBR());
         }
         else {
             properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS,

@@ -295,7 +295,8 @@ public class HDFSDataSourceFactory implements IRecordReaderFactory<Object>, IInd
         else if(configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT.trim())
                 .equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)){
 
-            return new ShapeFileRecordReader<>(read, inputSplits, readSchedule, nodeName, conf, warningCollector, recType, configuration.get(ExternalDataConstants.KEY_REQUESTED_FIELDS));
+            return new ShapeFileRecordReader<>(read, inputSplits, readSchedule, nodeName, conf, warningCollector, recType, configuration.get(ExternalDataConstants.KEY_REQUESTED_FIELDS),
+                    configuration.get(ExternalDataConstants.KEY_FILTER_PUSHDOWN_MBR));
 
 
         }

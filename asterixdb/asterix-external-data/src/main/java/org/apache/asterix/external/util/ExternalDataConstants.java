@@ -128,7 +128,7 @@ public class ExternalDataConstants {
     public static final String KEY_REDACT_WARNINGS = "redact-warnings";
     public static final String KEY_REQUESTED_FIELDS = "requested-fields";
     public static final String KEY_EXTERNAL_SCAN_BUFFER_SIZE = "external-scan-buffer-size";
-
+    public static final String KEY_FILTER_PUSHDOWN_MBR = "filter-mbr";
     /**
      * Keys for adapter name
      **/
