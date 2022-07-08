@@ -77,7 +77,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 InputSplit inputSplit,
                 JobConf conf, Reporter reporter, ARecordType recordType, String requestedFields, String filterMBRInfo) throws IOException, InterruptedException
         {
-            super(inputSplit,conf,reporter);
+            super(inputSplit,conf,reporter, filterMBRInfo);
             this.recordType = recordType;
             builder = new RecordBuilder();
             this.filterMBRInfo = filterMBRInfo;
@@ -93,23 +93,14 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     readDBFFields = true;
                 }
                 else{
-                    readGeometryField = Arrays.asList(fields).contains("geometry");
+                    readGeometryField = Arrays.asList(fields).contains("g");
                     if(readGeometryField && fields.length > 1){
                         readDBFFields = true;
                     }
-                    else if(!readGeometryField)
-                        readDBFFields = true;
-                    else
-                        readDBFFields = false;
+                    else readDBFFields = !readGeometryField;
                 }
             }
-            if(filterMBRInfo != null){
-                String[] coordinates = filterMBRInfo.split(",");
-                filterXmin = Double.parseDouble(coordinates[0]);
-                filterYMin = Double.parseDouble(coordinates[1]);
-                filterXmax = Double.parseDouble(coordinates[2]);
-                filterYmax = Double.parseDouble(coordinates[3]);
-            }
+
 
         }
 
@@ -125,7 +116,8 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             int fieldIndex;
 
             if(readGeometryField){
-                OGCGeometry geometry;
+                OGCGeometry geometry = null;
+                boolean hasReadFully = true;
                 m_shpReader.readRecordHeader();
                 switch (m_shpReader.shapeType){
                     case 1:
@@ -141,46 +133,54 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     case 8:   //MultiPoint
                     case 18:  //MultiPointZ
                     case 28:  //MultiPointM
+
                         geometry=new OGCMultiPoint(m_shpReader.readNewMultiPoint(),SpatialReference.create(4326));
                         break;
                     case 5:
                     case 15:
                     case 25:
-                        Polygon p=m_shpReader.readNewPolygon();
-                        if(p.getExteriorRingCount()>1){
-                            geometry=new OGCMultiPolygon(p,SpatialReference.create(4326));
+                        Polygon p = new Polygon();
+                        hasReadFully = m_shpReader.readNewPolygon(p);
+                        if(hasReadFully){
+                            if(p.getExteriorRingCount()>1){
+                                geometry=new OGCMultiPolygon(p,SpatialReference.create(4326));
+                            }
+                            else
+                                geometry=new OGCPolygon(p,SpatialReference.create(4326));
+
                         }
-                        else
-                            geometry=new OGCPolygon(p,SpatialReference.create(4326));
                         break;
 
                     default:
                         throw new IllegalStateException("Unexpected value: " + m_shpReader.shapeType);
                 }
 
-                String fieldName="g";
-                fieldIndex = recordType.getFieldIndex(fieldName);
+                if(hasReadFully){
+                    String fieldName="g";
+                    fieldIndex = recordType.getFieldIndex(fieldName);
 
-                ArrayBackedValueStorage valueBuffer=new ArrayBackedValueStorage();
-                ISerializerDeserializer<AGeometry> gSerde =
-                        SerializerDeserializerProvider.INSTANCE.getSerializerDeserializer(BuiltinType.AGEOMETRY);
-                aGeomtry.setValue(geometry);
-                IDataParser.toBytes(aGeomtry,valueBuffer,gSerde);
+                    ArrayBackedValueStorage valueBuffer=new ArrayBackedValueStorage();
+                    ISerializerDeserializer<AGeometry> gSerde =
+                            SerializerDeserializerProvider.INSTANCE.getSerializerDeserializer(BuiltinType.AGEOMETRY);
+                    aGeomtry.setValue(geometry);
+                    IDataParser.toBytes(aGeomtry,valueBuffer,gSerde);
 
-                if (fieldIndex < 0) {
-                    //field is not defined and the type is open
-                    AMutableString str = new AMutableString("g");
-                    ArrayBackedValueStorage nameBuffer = new ArrayBackedValueStorage();
-                    IDataParser.toBytes(str, nameBuffer,stringSerde);
-                    builder.addField(nameBuffer,valueBuffer);
+                    if (fieldIndex < 0) {
+                        //field is not defined and the type is open
+                        AMutableString str = new AMutableString("g");
+                        ArrayBackedValueStorage nameBuffer = new ArrayBackedValueStorage();
+                        IDataParser.toBytes(str, nameBuffer,stringSerde);
+                        builder.addField(nameBuffer,valueBuffer);
 
-                } else {
-                    final IAType fieldType = recordType.getFieldType(fieldName);
-                    if(fieldType.getTypeTag()==aGeomtry.getType().getTypeTag()){
-                        builder.addField(fieldIndex,valueBuffer);
+                    } else {
+                        final IAType fieldType = recordType.getFieldType(fieldName);
+                        if(fieldType.getTypeTag()==aGeomtry.getType().getTypeTag()){
+                            builder.addField(fieldIndex,valueBuffer);
+                        }
+                        else
+                            throw new IllegalStateException("Defined type and Parsed Type do not match");
+
                     }
-                    else
-                        throw new IllegalStateException("Defined type and Parsed Type do not match");
 
                 }
 
@@ -292,7 +292,6 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             //valueContainer.reset();
             builder.write(valueContainer.getDataOutput(), true);
             value.set(valueContainer);
-
             return true;
         }
         private int parseInt(

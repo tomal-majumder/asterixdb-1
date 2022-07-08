@@ -87,7 +87,7 @@ abstract class AbstractReader<T extends Writable>
             String shapePath=path.toString();
             String dbfPath= shapePath.substring(0,shapePath.lastIndexOf('.'))+".dbf";
             m_dfbStream=fileSystem.open(new Path(dbfPath));
-            m_shpReader = new ShpReader(m_shpStream);
+            //m_shpReader = new ShpReader(m_shpStream);
             m_dbfReader=new DBFReader(m_dfbStream);
              /*
             ZipInputStream zis = new ZipInputStream(m_shpStream);

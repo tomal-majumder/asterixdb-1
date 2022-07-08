@@ -41,7 +41,7 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
 
 
     public AbstractShapeReader(InputSplit inputSplit,
-                          JobConf conf, Reporter reporter) throws IOException {
+                          JobConf conf, Reporter reporter, String filterMBRInfo) throws IOException {
         //System.out.println(inputSplit instanceof FileSplit);
         if (inputSplit instanceof FileSplit) {
             final FileSplit fileSplit = (FileSplit) inputSplit;
@@ -53,7 +53,7 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
             String shapePath=path.toString();
             String dbfPath= shapePath.substring(0,shapePath.lastIndexOf('.'))+".dbf";
             m_dfbStream=fileSystem.open(new Path(dbfPath));
-            m_shpReader = new ShpReader(m_shpStream);
+            m_shpReader = new ShpReader(m_shpStream, filterMBRInfo);
             m_dbfReader=new DBFReader(m_dfbStream);
             final List<DBFField> fields = m_dbfReader.getFields();
             m_keys = new ArrayList<Text>(fields.size());
@@ -61,28 +61,6 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
             {
                 m_keys.add(new Text(field.fieldName));
             }
-
-
-
-             /*
-            ZipInputStream zis = new ZipInputStream(m_shpStream);
-            ZipEntry zipEntry = zis.getNextEntry();
-            while (zipEntry != null) {
-                long s = zipEntry.getSize();
-                zipEntry = zis.getNextEntry();
-            }
-
-            ZipFile zipFile = new ZipFile(path.toString());
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while(entries.hasMoreElements()){
-                ZipEntry entry = entries.nextElement();
-                if(entry.getName().toLowerCase().endsWith(".shp"))
-                    m_shpStream=new DataInputStream(zipFile.getInputStream(entry));
-                if(entry.getName().toLowerCase().endsWith(".dbf"))
-                    m_dfbStream=new DataInputStream(zipFile.getInputStream(entry));
-                //InputStream stream = zipFile.getInputStream(entry);
-            }
-        }*/
 
         }
         else
