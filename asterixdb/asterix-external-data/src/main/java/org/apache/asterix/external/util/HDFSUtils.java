@@ -132,7 +132,7 @@ public class HDFSUtils {
                         fileSplits
                                 .add(new FileSplit(filePath,
                                         block.getOffset(), (block.getLength() + block.getOffset()) < file.getSize()
-                                        ? block.getLength() : (file.getSize() - block.getOffset()),
+                                                ? block.getLength() : (file.getSize() - block.getOffset()),
                                         block.getHosts()));
                         orderedExternalFiles.add(file);
                     }
@@ -262,7 +262,7 @@ public class HDFSUtils {
     }
 
     public static AlgebricksAbsolutePartitionConstraint getPartitionConstraints(IApplicationContext appCtx,
-                                                                                AlgebricksAbsolutePartitionConstraint clusterLocations) {
+            AlgebricksAbsolutePartitionConstraint clusterLocations) {
         if (clusterLocations == null) {
             return ((ICcApplicationContext) appCtx).getClusterStateManager().getClusterLocations();
         }
@@ -298,7 +298,7 @@ public class HDFSUtils {
     }
 
     public static void setFunctionCallInformationMap(Map<String, FunctionCallInformation> funcCallInfoMap,
-                                                     Configuration conf) throws IOException {
+            Configuration conf) throws IOException {
         String stringFunctionCallInfoMap = ExternalDataUtils.serializeFunctionCallInfoToString(funcCallInfoMap);
         conf.set(ExternalDataConstants.KEY_HADOOP_ASTERIX_FUNCTION_CALL_INFORMATION, stringFunctionCallInfoMap);
     }

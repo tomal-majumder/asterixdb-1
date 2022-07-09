@@ -38,7 +38,6 @@ import org.apache.asterix.external.dataset.adapter.FeedAdapter;
 import org.apache.asterix.external.dataset.adapter.GenericAdapter;
 import org.apache.asterix.external.indexing.ExternalFile;
 import org.apache.asterix.external.input.HDFSDataSourceFactory;
-import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.OGCGeometryInputFormat;
 import org.apache.asterix.external.parser.factory.ADMDataParserFactory;
 import org.apache.asterix.external.provider.DataflowControllerProvider;
 import org.apache.asterix.external.provider.DatasourceFactoryProvider;
@@ -149,9 +148,10 @@ public class GenericAdapterFactory implements IIndexingAdapterFactory, ITypedAda
         ICcApplicationContext appCtx = (ICcApplicationContext) serviceContext.getApplicationContext();
         ExternalDataUtils.validateDataSourceParameters(configuration);
         dataSourceFactory = createExternalDataSourceFactory(configuration);
-        if(configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)){
-            if(dataSourceFactory instanceof HDFSDataSourceFactory){
-                ((HDFSDataSourceFactory)dataSourceFactory).setRecordType(recordType);
+        if (configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT)
+                .equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)) {
+            if (dataSourceFactory instanceof HDFSDataSourceFactory) {
+                ((HDFSDataSourceFactory) dataSourceFactory).setRecordType(recordType);
             }
         }
         if (dataSourceFactory.isIndexible() && (files != null)) {

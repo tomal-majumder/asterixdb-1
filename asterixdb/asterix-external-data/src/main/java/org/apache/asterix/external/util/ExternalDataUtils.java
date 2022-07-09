@@ -175,7 +175,7 @@ public class ExternalDataUtils {
     }
 
     public static IInputStreamFactory createExternalInputStreamFactory(ILibraryManager libraryManager,
-                                                                       DataverseName dataverse, String stream) throws HyracksDataException {
+            DataverseName dataverse, String stream) throws HyracksDataException {
         try {
             String libraryName = getLibraryName(stream);
             String className = getExternalClassName(stream);
@@ -244,7 +244,7 @@ public class ExternalDataUtils {
 
     // Currently not used.
     public static IRecordReaderFactory<?> createExternalRecordReaderFactory(ILibraryManager libraryManager,
-                                                                            Map<String, String> configuration) throws AsterixException {
+            Map<String, String> configuration) throws AsterixException {
         String readerFactory = configuration.get(ExternalDataConstants.KEY_READER_FACTORY);
         if (readerFactory == null) {
             throw new AsterixException("to use " + ExternalDataConstants.EXTERNAL + " reader, the parameter "
@@ -281,7 +281,7 @@ public class ExternalDataUtils {
 
     // Currently not used.
     public static IDataParserFactory createExternalParserFactory(ILibraryManager libraryManager,
-                                                                 DataverseName dataverse, String parserFactoryName) throws AsterixException {
+            DataverseName dataverse, String parserFactoryName) throws AsterixException {
         try {
             String library = parserFactoryName.substring(0,
                     parserFactoryName.indexOf(ExternalDataConstants.EXTERNAL_LIBRARY_SEPARATOR));
@@ -524,7 +524,7 @@ public class ExternalDataUtils {
      * @param configuration properties
      */
     public static void validateAdapterSpecificProperties(Map<String, String> configuration, SourceLocation srcLoc,
-                                                         IWarningCollector collector, IApplicationContext appCtx) throws CompilationException {
+            IWarningCollector collector, IApplicationContext appCtx) throws CompilationException {
         String type = configuration.get(ExternalDataConstants.KEY_EXTERNAL_SOURCE_TYPE);
 
         switch (type) {
@@ -757,7 +757,7 @@ public class ExternalDataUtils {
      * @param datasetRecordType dataset declared type
      */
     public static void validateParquetTypeAndConfiguration(Map<String, String> properties,
-                                                           ARecordType datasetRecordType) throws CompilationException {
+            ARecordType datasetRecordType) throws CompilationException {
         if (isParquetFormat(properties)) {
             if (datasetRecordType.getFieldTypes().length != 0) {
                 throw new CompilationException(ErrorCode.UNSUPPORTED_TYPE_FOR_PARQUET, datasetRecordType.getTypeName());
@@ -784,12 +784,11 @@ public class ExternalDataUtils {
 
     public static void setExternalDataProjectionInfo(DataProjectionInfo projectionInfo, Map<String, String> properties)
             throws IOException {
-        if(properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)){
+        if (properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)) {
             String[] fields = projectionInfo.getProjectionInfo().getFieldNames();
-            properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS ,String.join(",", fields));
+            properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS, String.join(",", fields));
             properties.put(ExternalDataConstants.KEY_FILTER_PUSHDOWN_MBR, projectionInfo.getFilterMBR());
-        }
-        else {
+        } else {
             properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS,
                     serializeExpectedTypeToString(projectionInfo.getProjectionInfo()));
             properties.put(ExternalDataConstants.KEY_HADOOP_ASTERIX_FUNCTION_CALL_INFORMATION,
