@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import com.esri.core.geometry.MultiPoint;
+import com.esri.core.geometry.Polyline;
 import org.apache.asterix.builders.RecordBuilder;
 import org.apache.asterix.external.api.IDataParser;
 import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.DBFReadSupport.DBFField;
@@ -135,10 +137,11 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             builder.init();
             builder.reset(this.recordType);
             int fieldIndex;
+            boolean hasReadFully = false;
 
             if (readGeometryField) {
                 OGCGeometry geometry = null;
-                boolean hasReadFully = true;
+
                 m_shpReader.readRecordHeader();
                 switch (m_shpReader.shapeType) {
                     case 1:
@@ -149,13 +152,18 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     case 3: //PolyLine
                     case 13:
                     case 23:
-                        geometry = new OGCMultiLineString(m_shpReader.readNewPolyline(), SpatialReference.create(4326));
+                        Polyline polyline = new Polyline();
+                        hasReadFully = m_shpReader.readNewPolyline(polyline);
+                        if(hasReadFully)
+                            geometry = new OGCMultiLineString(polyline, SpatialReference.create(4326));
                         break;
                     case 8: //MultiPoint
                     case 18: //MultiPointZ
                     case 28: //MultiPointM
-
-                        geometry = new OGCMultiPoint(m_shpReader.readNewMultiPoint(), SpatialReference.create(4326));
+                        MultiPoint multiPoint = new MultiPoint();
+                        hasReadFully = m_shpReader.readNewMultiPoint(multiPoint);
+                        if(hasReadFully)
+                            geometry = new OGCMultiPoint(multiPoint, SpatialReference.create(4326));
                         break;
                     case 5:
                     case 15:
@@ -203,6 +211,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
                 }
 
+
             }
 
             //   Map<String, Object> map=m_dbfReader.readRecordAsMap();
@@ -213,7 +222,10 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 if (dataType != DBFType.END) {
                     List<DBFField> fields = m_dbfReader.getFields();
                     for (DBFField field : fields) {
-
+                        if(!hasReadFully){
+                            m_dbfReader.m_dataInputStream.skipBytes(field.fieldLength);
+                            continue;
+                        }
                         ArrayBackedValueStorage valueBytes = new ArrayBackedValueStorage();
                         final byte bytes[] = new byte[field.fieldLength];
                         m_dbfReader.m_dataInputStream.readFully(bytes);
@@ -301,7 +313,12 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 }
 
             }
-
+            if(!hasReadFully){
+                ArrayBackedValueStorage va = new ArrayBackedValueStorage();
+                IDataParser.toBytes(ANull.NULL, va, nullSerde);
+                value.set(va);
+                return true;
+            }
             ArrayBackedValueStorage valueContainer = new ArrayBackedValueStorage();
             //valueContainer.reset();
             builder.write(valueContainer.getDataOutput(), true);

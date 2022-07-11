@@ -155,12 +155,12 @@ public class ShpReader implements Serializable {
 
     public boolean readNewPolygon(Polygon polygon) throws IOException {
         polygon.setEmpty();
-
+            /*
         recordNumber = m_dataInputStream.readInt();
         contentLength = m_dataInputStream.readInt();
         contentLengthInBytes = contentLength + contentLength; //may be 4 minus for reading shapeType
         shapeType = EndianUtils.readSwappedInteger(m_dataInputStream);
-
+           */
         double xmin = EndianUtils.readSwappedDouble(m_dataInputStream);
         double ymin = EndianUtils.readSwappedDouble(m_dataInputStream);
         double xmax = EndianUtils.readSwappedDouble(m_dataInputStream);
@@ -250,8 +250,9 @@ public class ShpReader implements Serializable {
         return polyline;
     }
 
-    public Polyline readNewPolyline() throws IOException {
-        Polyline polyLine = new Polyline();
+    public boolean readNewPolyline(Polyline polyLine) throws IOException {
+        //Polyline polyLine = new Polyline();
+        polyLine.setEmpty();
         /*
         recordNumber = m_dataInputStream.readInt();
         contentLength = m_dataInputStream.readInt();
@@ -265,9 +266,9 @@ public class ShpReader implements Serializable {
         double ymax = EndianUtils.readSwappedDouble(m_dataInputStream);
 
         if (isFilterMBRPushdown) {
-            if (isOverlapped(xmin, ymin, xmax, ymax)) {
-                //we need to skip the rest of the part
-
+            if (!isOverlapped(xmin, ymin, xmax, ymax)) {
+                m_dataInputStream.skipBytes(contentLengthInBytes);
+                return false;
             }
         }
         numParts = EndianUtils.readSwappedInteger(m_dataInputStream);
@@ -321,7 +322,7 @@ public class ShpReader implements Serializable {
             }
         }
         polyLine.closeAllPaths();
-        return polyLine;
+        return true;
     }
 
     public MultiPoint queryMultiPoint(MultiPoint multiPoint) throws IOException {
@@ -343,18 +344,28 @@ public class ShpReader implements Serializable {
         return multiPoint;
     }
 
-    public MultiPoint readNewMultiPoint() throws IOException {
-        MultiPoint multiPoint = new MultiPoint();
+    public boolean readNewMultiPoint(MultiPoint multiPoint) throws IOException {
+        //MultiPoint multiPoint = new MultiPoint();
+        multiPoint.setEmpty();
         /*
         recordNumber = m_dataInputStream.readInt();
         contentLength = m_dataInputStream.readInt();
         contentLengthInBytes = contentLength + contentLength - 4; //may be 4 minus for reading shapeType
         shapeType = EndianUtils.readSwappedInteger(m_dataInputStream);
          */
+
         double xmin = EndianUtils.readSwappedDouble(m_dataInputStream);
         double ymin = EndianUtils.readSwappedDouble(m_dataInputStream);
         double xmax = EndianUtils.readSwappedDouble(m_dataInputStream);
         double ymax = EndianUtils.readSwappedDouble(m_dataInputStream);
+
+        if (isFilterMBRPushdown) {
+            if (!isOverlapped(xmin, ymin, xmax, ymax)) {
+                m_dataInputStream.skipBytes(contentLengthInBytes);
+                return false;
+            }
+        }
+
         numPoints = EndianUtils.readSwappedInteger(m_dataInputStream);
         Point[] points = new Point[numPoints];
         double[] mValues = new double[numPoints];
@@ -392,7 +403,7 @@ public class ShpReader implements Serializable {
         for (int i = 0; i < numPoints; i++) {
             multiPoint.add(points[i]);
         }
-        return multiPoint;
+        return true;
     }
 
     private void readShapeHeader() throws IOException {

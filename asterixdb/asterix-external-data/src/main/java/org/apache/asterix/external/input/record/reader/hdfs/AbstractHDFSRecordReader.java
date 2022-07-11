@@ -29,6 +29,7 @@ import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hyracks.data.std.primitive.VoidPointable;
 
 public abstract class AbstractHDFSRecordReader<K, V> implements IRecordReader<V> {
     protected RecordReader<K, V> reader;
@@ -95,6 +96,10 @@ public abstract class AbstractHDFSRecordReader<K, V> implements IRecordReader<V>
 
     @Override
     public IRawRecord<V> next() throws IOException {
+        if(value instanceof VoidPointable){
+            if(((VoidPointable) value).getLength() <= 1)
+                return null;
+        }
         record.set(value);
         return record;
     }
