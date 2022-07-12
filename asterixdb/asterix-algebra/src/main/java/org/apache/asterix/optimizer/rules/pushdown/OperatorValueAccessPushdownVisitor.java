@@ -18,11 +18,7 @@
  */
 package org.apache.asterix.optimizer.rules.pushdown;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.asterix.common.config.DatasetConfig;
 import org.apache.asterix.common.metadata.DataverseName;
@@ -305,24 +301,29 @@ public class OperatorValueAccessPushdownVisitor implements ILogicalOperatorVisit
         visitInputs(op);
 
         if (isShapeFileFormat()) {
+            ArrayList<String> acceptedFunctionNames = new ArrayList<String>(
+                    Arrays.asList("st-intersects", "st-contains", "st-crosses", "st-equals", "st-overlaps", "st-touches", "st-within"));
             ILogicalExpression logicalExpression = op.getCondition().getValue();
             if (logicalExpression instanceof ScalarFunctionCallExpression) {
-                List<Mutable<ILogicalExpression>> arguments =
-                        ((ScalarFunctionCallExpression) logicalExpression).getArguments();
-                for (Mutable<ILogicalExpression> e : arguments) {
-                    ILogicalExpression argument = e.getValue();
-                    if (argument instanceof ConstantExpression) {
-                        IAlgebricksConstantValue value = ((ConstantExpression) argument).getValue();
-                        if (value instanceof AsterixConstantValue) {
-                            IAObject constantObject = ((AsterixConstantValue) value).getObject();
-                            if (constantObject instanceof AGeometry) {
-                                hasFilterPushdown = true;
-                                Envelope record = new Envelope();
-                                ((AGeometry) constantObject).getGeometry().getEsriGeometry().queryEnvelope(record);
-                                xMin = record.getXMin();
-                                yMin = record.getYMin();
-                                xMax = record.getXMax();
-                                yMax = record.getYMax();
+                String functionName = ((ScalarFunctionCallExpression) logicalExpression).getFunctionIdentifier().getName();
+                if(acceptedFunctionNames.contains(functionName)){
+                    List<Mutable<ILogicalExpression>> arguments =
+                            ((ScalarFunctionCallExpression) logicalExpression).getArguments();
+                    for (Mutable<ILogicalExpression> e : arguments) {
+                        ILogicalExpression argument = e.getValue();
+                        if (argument instanceof ConstantExpression) {
+                            IAlgebricksConstantValue value = ((ConstantExpression) argument).getValue();
+                            if (value instanceof AsterixConstantValue) {
+                                IAObject constantObject = ((AsterixConstantValue) value).getObject();
+                                if (constantObject instanceof AGeometry) {
+                                    hasFilterPushdown = true;
+                                    Envelope record = new Envelope();
+                                    ((AGeometry) constantObject).getGeometry().getEsriGeometry().queryEnvelope(record);
+                                    xMin = record.getXMin();
+                                    yMin = record.getYMin();
+                                    xMax = record.getXMax();
+                                    yMax = record.getYMax();
+                                }
                             }
                         }
                     }

@@ -95,19 +95,12 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
         private final ARecordType recordType;
         private final boolean readGeometryField;
         private final boolean readDBFFields;
-        private final String filterMBRInfo;
-
-        private double filterXmin;
-        private double filterYMin;
-        private double filterXmax;
-        private double filterYmax;
 
         public ShapeFileReader(InputSplit inputSplit, JobConf conf, Reporter reporter, ARecordType recordType,
                 String requestedFields, String filterMBRInfo) throws IOException, InterruptedException {
             super(inputSplit, conf, reporter, filterMBRInfo);
             this.recordType = recordType;
             builder = new RecordBuilder();
-            this.filterMBRInfo = filterMBRInfo;
             if (requestedFields == null) {
                 readGeometryField = true;
                 readDBFFields = true;
@@ -137,7 +130,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             builder.init();
             builder.reset(this.recordType);
             int fieldIndex;
-            boolean hasReadFully = false;
+            boolean hasReadFully = true;
 
             if (readGeometryField) {
                 OGCGeometry geometry = null;

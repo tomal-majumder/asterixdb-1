@@ -148,8 +148,8 @@ public class GenericAdapterFactory implements IIndexingAdapterFactory, ITypedAda
         ICcApplicationContext appCtx = (ICcApplicationContext) serviceContext.getApplicationContext();
         ExternalDataUtils.validateDataSourceParameters(configuration);
         dataSourceFactory = createExternalDataSourceFactory(configuration);
-        if (configuration.get(ExternalDataConstants.KEY_INPUT_FORMAT)
-                .equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)) {
+        if (configuration.get(ExternalDataConstants.KEY_FORMAT)
+                .equals(ExternalDataConstants.FORMAT_SHAPE)) {
             if (dataSourceFactory instanceof HDFSDataSourceFactory) {
                 ((HDFSDataSourceFactory) dataSourceFactory).setRecordType(recordType);
             }

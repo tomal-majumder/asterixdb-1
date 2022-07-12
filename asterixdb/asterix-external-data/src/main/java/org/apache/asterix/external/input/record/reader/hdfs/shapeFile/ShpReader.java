@@ -79,7 +79,7 @@ public class ShpReader implements Serializable {
         recordNumber = m_dataInputStream.readInt();
         contentLength = m_dataInputStream.readInt();
         contentLengthInBytes = contentLength + contentLength - 4;
-
+        //contentLengthInBytes = contentLength + contentLength;
         shapeType = EndianUtils.readSwappedInteger(m_dataInputStream);
     }
 
@@ -168,7 +168,7 @@ public class ShpReader implements Serializable {
 
         if (isFilterMBRPushdown) {
             if (!isOverlapped(xmin, ymin, xmax, ymax)) {
-                m_dataInputStream.skipBytes(contentLengthInBytes);
+                m_dataInputStream.skipBytes(contentLengthInBytes - 32);
                 return false;
             }
         }
@@ -267,7 +267,7 @@ public class ShpReader implements Serializable {
 
         if (isFilterMBRPushdown) {
             if (!isOverlapped(xmin, ymin, xmax, ymax)) {
-                m_dataInputStream.skipBytes(contentLengthInBytes);
+                m_dataInputStream.skipBytes(contentLengthInBytes - 32);
                 return false;
             }
         }
@@ -361,7 +361,7 @@ public class ShpReader implements Serializable {
 
         if (isFilterMBRPushdown) {
             if (!isOverlapped(xmin, ymin, xmax, ymax)) {
-                m_dataInputStream.skipBytes(contentLengthInBytes);
+                m_dataInputStream.skipBytes(contentLengthInBytes - 32);
                 return false;
             }
         }
@@ -425,7 +425,7 @@ public class ShpReader implements Serializable {
     }
 
     private boolean isOverlapped(double xmin, double ymin, double xmax, double ymax) {
-        if (xmin >= filterXmax || filterXmin >= xmax || ymin >= filterYmax || filterYmin >= ymax)
+        if (xmin > filterXmax || filterXmin > xmax || ymin > filterYmax || filterYmin > ymax)
             return false;
         return true;
     }
