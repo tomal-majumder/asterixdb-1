@@ -300,6 +300,9 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
                         }
                     }
+                    if(m_dbfReader.getRecordLength() > m_dbfReader.getTotalFieldLength()){
+                        m_dbfReader.m_dataInputStream.skipBytes(m_dbfReader.getRecordLength() - m_dbfReader.getTotalFieldLength() -1);
+                    }
 
                 } else {
                     return false;
@@ -315,7 +318,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             ArrayBackedValueStorage valueContainer = new ArrayBackedValueStorage();
             //valueContainer.reset();
             builder.write(valueContainer.getDataOutput(), true);
-            value.set(valueContainer);
+            value.set(valueContainer);-
             return true;
         }
 

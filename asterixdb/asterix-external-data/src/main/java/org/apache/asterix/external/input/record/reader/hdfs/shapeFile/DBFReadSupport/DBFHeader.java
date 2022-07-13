@@ -48,6 +48,7 @@ public class DBFHeader implements Serializable {
     private short reserved4; /* 30-31 */
     public List<DBFField> fields; /* each 32 bytes */
     public int numberOfFields;
+    public int totalFieldLengthInBytes;
 
     public static DBFHeader read(final DataInputStream dataInput) throws IOException {
         final DBFHeader header = new DBFHeader();
@@ -73,10 +74,13 @@ public class DBFHeader implements Serializable {
 
         header.fields = new ArrayList<DBFField>();
         DBFField field;
+        int totalFieldLegth = 0;
         while ((field = DBFField.read(dataInput)) != null) {
             header.fields.add(field);
+            totalFieldLegth += field.fieldLength;
         }
         header.numberOfFields = header.fields.size();
+        header.totalFieldLengthInBytes = totalFieldLegth;
         return header;
     }
 

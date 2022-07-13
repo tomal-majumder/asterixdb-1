@@ -34,7 +34,6 @@ import org.apache.hadoop.io.Writable;
 public class DBFReader implements Serializable {
     public final transient DataInputStream m_dataInputStream;
     private final transient DBFHeader m_header;
-
     public DBFReader(final DataInputStream dataInputStream) throws IOException {
         m_dataInputStream = dataInputStream;
         m_header = DBFHeader.read(dataInputStream);
@@ -128,5 +127,10 @@ public class DBFReader implements Serializable {
     public Writable readFieldWritable(final int index) throws IOException {
         return m_header.getField(index).readWritable(m_dataInputStream);
     }
-
+    public int getTotalFieldLength(){
+        return m_header.totalFieldLengthInBytes;
+    }
+    public int getRecordLength(){
+        return m_header.recordLength;
+    }
 }
