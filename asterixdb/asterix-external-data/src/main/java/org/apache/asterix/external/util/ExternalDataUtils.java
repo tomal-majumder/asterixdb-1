@@ -18,15 +18,11 @@
  */
 package org.apache.asterix.external.util;
 
-import static org.apache.asterix.common.exceptions.ErrorCode.INVALID_REQ_PARAM_VAL;
-import static org.apache.asterix.common.exceptions.ErrorCode.PARAMETERS_NOT_ALLOWED_AT_SAME_TIME;
-import static org.apache.asterix.common.exceptions.ErrorCode.PARAMETERS_REQUIRED;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_ADAPTER_NAME_GCS;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_DELIMITER;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_ESCAPE;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_EXCLUDE;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_EXTERNAL_SCAN_BUFFER_SIZE;
-import static org.apache.asterix.external.util.ExternalDataConstants.KEY_FORMAT;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_INCLUDE;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_QUOTE;
 import static org.apache.asterix.external.util.ExternalDataConstants.KEY_RECORD_END;
@@ -784,10 +780,23 @@ public class ExternalDataUtils {
 
     public static void setExternalDataProjectionInfo(DataProjectionInfo projectionInfo, Map<String, String> properties)
             throws IOException {
-        if (properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)) {
+        if (properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE) ) {
+
             String[] fields = projectionInfo.getProjectionInfo().getFieldNames();
+            String filterMBRInfo = projectionInfo.getFilterMBR();
+            if(properties.containsKey("filter-pushdown")){
+                if(properties.get("filter-pushdown").equals("false")){
+                    fields  = null;
+                }
+            }
+            if(properties.containsKey("projection-pushdown")){
+                if(properties.get("filter-pushdown").equals("false")){
+                    filterMBRInfo = null;
+                }
+            }
+
             properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS, String.join(",", fields));
-            properties.put(ExternalDataConstants.KEY_FILTER_PUSHDOWN_MBR, projectionInfo.getFilterMBR());
+            properties.put(ExternalDataConstants.KEY_FILTER_PUSHDOWN_MBR, filterMBRInfo);
         } else {
             properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS,
                     serializeExpectedTypeToString(projectionInfo.getProjectionInfo()));

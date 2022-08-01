@@ -40,20 +40,19 @@ public class ShpReader implements Serializable {
 
     private transient int m_parts[] = new int[4];
 
-    public transient int recordNumber;
-    public transient int contentLength;
-    public transient int contentLengthInBytes;
-    public transient int shapeType;
-    public transient double filterXmin;
-    public transient double filterYmin;
-    public transient double filterXmax;
-    public transient double filterYmax;
-    public transient double mmin;
-    public transient double mmax;
-    public transient int numParts;
-    public transient int numPoints;
-    public boolean isFilterMBRPushdown;
-
+    private transient int recordNumber;
+    private transient int contentLength;
+    private transient int contentLengthInBytes;
+    private transient int shapeType;
+    protected transient double filterXmin;
+    protected transient double filterYmin;
+    protected transient double filterXmax;
+    protected transient double filterYmax;
+    private transient double mmin;
+    private transient double mmax;
+    private transient int numParts;
+    private transient int numPoints;
+    protected boolean isFilterMBRPushdown;
     public ShpReader(final DataInputStream dataInputStream, String filterMBRInfo) throws IOException {
         m_dataInputStream = dataInputStream;
         m_shpHeader = new ShpHeader(dataInputStream);
@@ -64,9 +63,11 @@ public class ShpReader implements Serializable {
             filterYmin = Double.parseDouble(coordinates[1]);
             filterXmax = Double.parseDouble(coordinates[2]);
             filterYmax = Double.parseDouble(coordinates[3]);
+            if(!m_shpHeader.isOverlapped(filterXmin, filterYmin, filterXmax,filterYmax)){
+                m_dataInputStream.skipBytes((m_shpHeader.fileLength *2) - 100);
+            }
         }
     }
-
     public ShpHeader getHeader() {
         return m_shpHeader;
     }
@@ -429,5 +430,10 @@ public class ShpReader implements Serializable {
             return false;
         return true;
     }
-
+    public int getShapeType(){
+        return shapeType;
+    }
+    public int getNumParts(){
+        return numParts;
+    }
 }

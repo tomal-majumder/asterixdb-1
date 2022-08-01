@@ -77,7 +77,7 @@ public class DBFHeader implements Serializable {
         int totalFieldLegth = 0;
         while ((field = DBFField.read(dataInput)) != null) {
             header.fields.add(field);
-            totalFieldLegth += field.fieldLength;
+            totalFieldLegth += field.getFieldLength();
         }
         header.numberOfFields = header.fields.size();
         header.totalFieldLengthInBytes = totalFieldLegth;

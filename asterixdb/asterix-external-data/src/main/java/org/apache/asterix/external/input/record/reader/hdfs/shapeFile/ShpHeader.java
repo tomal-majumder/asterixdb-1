@@ -62,4 +62,10 @@ public class ShpHeader implements Serializable {
         mmax = EndianUtils.readSwappedDouble(dataInputStream);
     }
 
+    public boolean isOverlapped(double xmin, double ymin, double xmax, double ymax) {
+        if (xmin > this.xmax || this.xmin > xmax || ymin > this.ymax || this.ymin > ymax)
+            return false;
+        return true;
+    }
+
 }

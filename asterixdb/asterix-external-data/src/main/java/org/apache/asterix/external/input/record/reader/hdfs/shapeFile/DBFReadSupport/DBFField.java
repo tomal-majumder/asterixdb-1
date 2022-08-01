@@ -35,20 +35,20 @@ import org.apache.hadoop.io.Writable;
 
 public class DBFField implements Serializable {
 
-    public static final int TERMINATOR = 0x0d;
+    private static final int TERMINATOR = 0x0d;
 
-    public String fieldName; /* 0-10  */
-    public byte dataType; /* 11    */
+    private String fieldName; /* 0-10  */
+    private byte dataType; /* 11    */
     private int reserved1; /* 12-15 */
-    public int fieldLength; /* 16    */
-    public byte decimalCount; /* 17    */
+    private int fieldLength; /* 16    */
+    private byte decimalCount; /* 17    */
     private short reserved2; /* 18-19 */
     private byte workAreaId; /* 20    */
     private short reserved3; /* 21-22 */
     private byte setFieldsFlag; /* 23    */
     private byte[] reserved4 = new byte[7]; /* 24-30 */
     private byte indexFieldFlag; /* 31    */
-    public String actualType;
+    private String actualType;
 
     private DBFField() {
     }
@@ -278,5 +278,15 @@ public class DBFField implements Serializable {
         sb.append(", decimalCount=").append(decimalCount);
         sb.append('}');
         return sb.toString();
+    }
+    public int getFieldLength()
+    {
+        return fieldLength;
+    }
+    public String getActualType(){
+        return actualType;
+    }
+    public String getFieldName(){
+        return fieldName;
     }
 }

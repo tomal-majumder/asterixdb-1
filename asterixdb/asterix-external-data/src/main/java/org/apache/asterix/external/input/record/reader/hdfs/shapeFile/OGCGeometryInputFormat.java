@@ -26,6 +26,7 @@ import java.util.List;
 
 import com.esri.core.geometry.MultiPoint;
 import com.esri.core.geometry.Polyline;
+import com.esri.core.geometry.ogc.*;
 import org.apache.asterix.builders.RecordBuilder;
 import org.apache.asterix.external.api.IDataParser;
 import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.DBFReadSupport.DBFField;
@@ -51,12 +52,7 @@ import org.apache.hyracks.data.std.util.ArrayBackedValueStorage;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.SpatialReference;
 // import com.esri.core.geometry.ogc.*;
-import com.esri.core.geometry.ogc.OGCGeometry;
-import com.esri.core.geometry.ogc.OGCMultiLineString;
-import com.esri.core.geometry.ogc.OGCMultiPoint;
-import com.esri.core.geometry.ogc.OGCMultiPolygon;
-import com.esri.core.geometry.ogc.OGCPoint;
-import com.esri.core.geometry.ogc.OGCPolygon;
+
 
 /**
  */
@@ -95,7 +91,6 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
         private final ARecordType recordType;
         private final boolean readGeometryField;
         private final boolean readDBFFields;
-
         public ShapeFileReader(InputSplit inputSplit, JobConf conf, Reporter reporter, ARecordType recordType,
                 String requestedFields, String filterMBRInfo) throws IOException, InterruptedException {
             super(inputSplit, conf, reporter, filterMBRInfo);
@@ -106,7 +101,6 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 readDBFFields = true;
             } else {
                 String[] fields = requestedFields.split(",");
-
                 if (requestedFields.isEmpty()) {
                     readGeometryField = true;
                     readDBFFields = true;
@@ -123,8 +117,9 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
         @Override
         public boolean next(Void key, VoidPointable value) throws IOException {
+
             boolean hasMore = m_shpReader.hasMore();
-            if (!hasMore)
+            if (!hasMore )
                 return false;
             //m_shpReader.queryPoint();
             builder.init();
@@ -134,9 +129,8 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
             if (readGeometryField) {
                 OGCGeometry geometry = null;
-
                 m_shpReader.readRecordHeader();
-                switch (m_shpReader.shapeType) {
+                switch (m_shpReader.getShapeType()) {
                     case 1:
                     case 11: //PointZ
                     case 21: //PointM
@@ -147,16 +141,23 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     case 23:
                         Polyline polyline = new Polyline();
                         hasReadFully = m_shpReader.readNewPolyline(polyline);
-                        if(hasReadFully)
-                            geometry = new OGCMultiLineString(polyline, SpatialReference.create(4326));
-                        break;
+                        if (hasReadFully){
+                            if(m_shpReader.getNumParts() == 1){
+                                geometry = new OGCLineString(polyline, 0 , SpatialReference.create(4326));
+                            }
+                            else{
+                                geometry = new OGCMultiLineString(polyline, SpatialReference.create(4326));
+
+                            }
+                        }break;
                     case 8: //MultiPoint
                     case 18: //MultiPointZ
                     case 28: //MultiPointM
                         MultiPoint multiPoint = new MultiPoint();
                         hasReadFully = m_shpReader.readNewMultiPoint(multiPoint);
-                        if(hasReadFully)
+                        if(hasReadFully) {
                             geometry = new OGCMultiPoint(multiPoint, SpatialReference.create(4326));
+                        }
                         break;
                     case 5:
                     case 15:
@@ -168,12 +169,11 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                                 geometry = new OGCMultiPolygon(p, SpatialReference.create(4326));
                             } else
                                 geometry = new OGCPolygon(p, SpatialReference.create(4326));
-
                         }
                         break;
 
                     default:
-                        throw new IllegalStateException("Unexpected value: " + m_shpReader.shapeType);
+                        throw new IllegalStateException("Unexpected value: " + m_shpReader.getShapeType());
                 }
 
                 if (hasReadFully) {
@@ -182,7 +182,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
                     ArrayBackedValueStorage valueBuffer = new ArrayBackedValueStorage();
                     ISerializerDeserializer<AGeometry> gSerde =
-                            SerializerDeserializerProvider.INSTANCE.getSerializerDeserializer(BuiltinType.AGEOMETRY);
+                           SerializerDeserializerProvider.INSTANCE.getSerializerDeserializer(BuiltinType.AGEOMETRY);
                     aGeomtry.setValue(geometry);
                     IDataParser.toBytes(aGeomtry, valueBuffer, gSerde);
 
@@ -199,32 +199,33 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                             builder.addField(fieldIndex, valueBuffer);
                         } else
                             throw new IllegalStateException("Defined type and Parsed Type do not match");
-
                     }
-
                 }
-
-
+                else{
+                    m_dbfReader.skipBytes(m_dbfReader.getRecordLength());
+                    ArrayBackedValueStorage valueContainer = new ArrayBackedValueStorage();
+                    IDataParser.toBytes(ANull.NULL, valueContainer, nullSerde);
+                    value.set(valueContainer);
+                    return true;
+                }
             }
 
             //   Map<String, Object> map=m_dbfReader.readRecordAsMap();
-
             //........ DBF File reading ............
             if (readDBFFields) {
+                hasMore = m_dbfReader.hasMore();
+                if (!hasMore )
+                    return false;
                 final byte dataType = m_dbfReader.nextDataType();
                 if (dataType != DBFType.END) {
                     List<DBFField> fields = m_dbfReader.getFields();
                     for (DBFField field : fields) {
-                        if(!hasReadFully){
-                            m_dbfReader.m_dataInputStream.skipBytes(field.fieldLength);
-                            continue;
-                        }
                         ArrayBackedValueStorage valueBytes = new ArrayBackedValueStorage();
-                        final byte bytes[] = new byte[field.fieldLength];
-                        m_dbfReader.m_dataInputStream.readFully(bytes);
+                        final byte[] bytes = new byte[field.getFieldLength()];
+                        m_dbfReader.readFully(bytes);
                         Object val;
                         IAType type;
-                        switch (field.actualType) {
+                        switch (field.getActualType()) {
                             case "string":
                                 val = new String(bytes).trim();
                                 aString.setValue((String) val);
@@ -283,16 +284,16 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                                 type = BuiltinType.ANULL;
                                 break;
                         }
-                        fieldIndex = recordType.getFieldIndex(field.fieldName);
+                        fieldIndex = recordType.getFieldIndex(field.getFieldName());
                         if (fieldIndex < 0) {
                             //field is not defined and the type is open
-                            AMutableString aString = new AMutableString(field.fieldName);
+                            AMutableString aString = new AMutableString(field.getFieldName());
                             ArrayBackedValueStorage nameBytes = new ArrayBackedValueStorage();
                             IDataParser.toBytes(aString, nameBytes, stringSerde);
                             builder.addField(nameBytes, valueBytes);
 
                         } else {
-                            final IAType fieldType = recordType.getFieldType(field.fieldName);
+                            final IAType fieldType = recordType.getFieldType(field.getFieldName());
                             if (fieldType.getTypeTag() == type.getTypeTag() || type == BuiltinType.ANULL) {
                                 builder.addField(fieldIndex, valueBytes);
                             } else
@@ -301,24 +302,17 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                         }
                     }
                     if(m_dbfReader.getRecordLength() > m_dbfReader.getTotalFieldLength()){
-                        m_dbfReader.m_dataInputStream.skipBytes(m_dbfReader.getRecordLength() - m_dbfReader.getTotalFieldLength() -1);
+                        m_dbfReader.skipBytes(m_dbfReader.getRecordLength() - m_dbfReader.getTotalFieldLength() -1);
                     }
-
                 } else {
                     return false;
                 }
 
             }
-            if(!hasReadFully){
-                ArrayBackedValueStorage va = new ArrayBackedValueStorage();
-                IDataParser.toBytes(ANull.NULL, va, nullSerde);
-                value.set(va);
-                return true;
-            }
+
             ArrayBackedValueStorage valueContainer = new ArrayBackedValueStorage();
-            //valueContainer.reset();
             builder.write(valueContainer.getDataOutput(), true);
-            value.set(valueContainer);-
+            value.set(valueContainer);
             return true;
         }
 

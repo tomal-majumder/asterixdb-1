@@ -65,7 +65,7 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
             final List<DBFField> fields = m_dbfReader.getFields();
             m_keys = new ArrayList<Text>(fields.size());
             for (final DBFField field : fields) {
-                m_keys.add(new Text(field.fieldName));
+                m_keys.add(new Text(field.getFieldName()));
             }
 
         } else {

@@ -32,7 +32,7 @@ import org.apache.hadoop.io.Writable;
  * Based on https://code.google.com/p/javadbf/
  */
 public class DBFReader implements Serializable {
-    public final transient DataInputStream m_dataInputStream;
+    private final transient DataInputStream m_dataInputStream;
     private final transient DBFHeader m_header;
     public DBFReader(final DataInputStream dataInputStream) throws IOException {
         m_dataInputStream = dataInputStream;
@@ -45,7 +45,7 @@ public class DBFReader implements Serializable {
             return null;
         }
         for (final DBFField field : m_header.fields) {
-            map.put(field.fieldName, field.readValue(m_dataInputStream));
+            map.put(field.getFieldName(), field.readValue(m_dataInputStream));
         }
         return map;
     }
@@ -132,5 +132,15 @@ public class DBFReader implements Serializable {
     }
     public int getRecordLength(){
         return m_header.recordLength;
+    }
+
+    public void skipBytes(int n) throws IOException {
+        m_dataInputStream.skipBytes(n);
+    }
+    public void readFully(byte[] bytes) throws IOException {
+        m_dataInputStream.readFully(bytes);
+    }
+    public boolean hasMore() throws IOException {
+        return m_dataInputStream.available() > 0;
     }
 }

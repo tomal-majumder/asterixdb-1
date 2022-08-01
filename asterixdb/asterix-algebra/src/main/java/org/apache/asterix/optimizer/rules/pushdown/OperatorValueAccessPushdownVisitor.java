@@ -305,10 +305,28 @@ public class OperatorValueAccessPushdownVisitor implements ILogicalOperatorVisit
                     Arrays.asList("st-intersects", "st-contains", "st-crosses", "st-equals", "st-overlaps", "st-touches", "st-within"));
             ILogicalExpression logicalExpression = op.getCondition().getValue();
             if (logicalExpression instanceof ScalarFunctionCallExpression) {
+                ScalarFunctionCallExpression predicateExpression = null;
                 String functionName = ((ScalarFunctionCallExpression) logicalExpression).getFunctionIdentifier().getName();
-                if(acceptedFunctionNames.contains(functionName)){
+                if(functionName.equals("and")){
                     List<Mutable<ILogicalExpression>> arguments =
                             ((ScalarFunctionCallExpression) logicalExpression).getArguments();
+                    for (Mutable<ILogicalExpression> e: arguments){
+                        ILogicalExpression argument = e.getValue();
+                        if(argument instanceof ScalarFunctionCallExpression){
+                            if(acceptedFunctionNames.contains(((ScalarFunctionCallExpression)argument).getFunctionIdentifier().getName())){
+                                predicateExpression = (ScalarFunctionCallExpression) argument;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else{
+                    if(acceptedFunctionNames.contains(functionName))
+                        predicateExpression = (ScalarFunctionCallExpression) logicalExpression;
+                 }
+                if(predicateExpression != null){
+                    List<Mutable<ILogicalExpression>> arguments =
+                            predicateExpression.getArguments();
                     for (Mutable<ILogicalExpression> e : arguments) {
                         ILogicalExpression argument = e.getValue();
                         if (argument instanceof ConstantExpression) {
