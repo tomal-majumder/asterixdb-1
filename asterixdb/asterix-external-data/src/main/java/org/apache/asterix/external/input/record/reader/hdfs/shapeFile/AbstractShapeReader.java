@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.DBFReadSupport.DBFField;
 import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.DBFReadSupport.DBFReader;
+import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.ShxReadSupport.ShxReader;
 import org.apache.asterix.external.parser.AbstractDataParser;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -43,7 +44,9 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
     protected FSDataInputStream m_shpStream;
     protected ShpReader m_shpReader;
     protected FSDataInputStream m_dfbStream;
+    protected FSDataInputStream m_shxStream;
     protected DBFReader m_dbfReader;
+    protected ShxReader m_shxReader;
     protected List<Text> m_keys;
     protected long m_recno;
 
@@ -54,14 +57,16 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
             final FileSplit fileSplit = (FileSplit) inputSplit;
             m_length = fileSplit.getLength();
             final Path path = fileSplit.getPath();
-
             final FileSystem fileSystem = FileSystem.get(conf);
             m_shpStream = fileSystem.open(path);
             String shapePath = path.toString();
             String dbfPath = shapePath.substring(0, shapePath.lastIndexOf('.')) + ".dbf";
             m_dfbStream = fileSystem.open(new Path(dbfPath));
+            String shxPath = shapePath.substring(0, shapePath.lastIndexOf('.')) + ".shx";
+            m_shxStream = fileSystem.open(new Path(shxPath));
             m_shpReader = new ShpReader(m_shpStream, filterMBRInfo);
             m_dbfReader = new DBFReader(m_dfbStream);
+            m_shxReader = new ShxReader(m_shxStream);
             final List<DBFField> fields = m_dbfReader.getFields();
             m_keys = new ArrayList<Text>(fields.size());
             for (final DBFField field : fields) {
@@ -88,6 +93,10 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
         if (m_dfbStream != null) {
             m_dfbStream.close();
             m_dfbStream = null;
+        }
+        if (m_shxStream != null) {
+            m_shxStream.close();
+            m_shxStream = null;
         }
     }
 }

@@ -112,7 +112,6 @@ public class OperatorValueAccessPushdownVisitor implements ILogicalOperatorVisit
     private double yMin;
     private double xMax;
     private double yMax;
-
     public OperatorValueAccessPushdownVisitor(IOptimizationContext context) {
         this.context = context;
         builder = new ExpectedSchemaBuilder();
@@ -120,6 +119,7 @@ public class OperatorValueAccessPushdownVisitor implements ILogicalOperatorVisit
         pushdownVisitor = new ExpressionValueAccessPushdownVisitor(builder);
         visitedOperators = new HashSet<>();
         hasFilterPushdown = false;
+
     }
 
     public void finish() throws AlgebricksException {

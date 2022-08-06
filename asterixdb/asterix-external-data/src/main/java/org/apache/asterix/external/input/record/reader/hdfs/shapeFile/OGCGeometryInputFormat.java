@@ -91,15 +91,23 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
         private final ARecordType recordType;
         private final boolean readGeometryField;
         private final boolean readDBFFields;
+        private boolean readShxFile = false;
         public ShapeFileReader(InputSplit inputSplit, JobConf conf, Reporter reporter, ARecordType recordType,
                 String requestedFields, String filterMBRInfo) throws IOException, InterruptedException {
             super(inputSplit, conf, reporter, filterMBRInfo);
             this.recordType = recordType;
             builder = new RecordBuilder();
-            if (requestedFields == null) {
+            if (requestedFields == null || requestedFields.equals("")) {
                 readGeometryField = true;
                 readDBFFields = true;
-            } else {
+            }
+            else if(requestedFields.equals("{}")){
+                // readNumberOfRecordsFromHeaderOnly = true;
+                readShxFile = true;
+                readGeometryField = false;
+                readDBFFields = false;
+            }
+            else {
                 String[] fields = requestedFields.split(",");
                 if (requestedFields.isEmpty()) {
                     readGeometryField = true;
@@ -117,6 +125,24 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
         @Override
         public boolean next(Void key, VoidPointable value) throws IOException {
+            if(readShxFile){
+                boolean hasMore = m_shxReader.hasMore();
+                if(!hasMore)
+                    return false;
+                builder.init();
+                builder.reset(this.recordType);
+                long recordOffset = m_shxReader.readRecord();
+                ArrayBackedValueStorage nameBuffer = new ArrayBackedValueStorage();
+                ArrayBackedValueStorage valueBytes = new ArrayBackedValueStorage();
+                IDataParser.toBytes(new AMutableString("Record_Offset"), nameBuffer, stringSerde);
+                aInt64.setValue(recordOffset);
+                IDataParser.toBytes(aInt64, valueBytes, int64Serde);
+                builder.addField(nameBuffer, valueBytes);
+                ArrayBackedValueStorage valueContainer = new ArrayBackedValueStorage();
+                builder.write(valueContainer.getDataOutput(), true);
+                value.set(valueContainer);
+                return true;
+            }
 
             boolean hasMore = m_shpReader.hasMore();
             if (!hasMore )
