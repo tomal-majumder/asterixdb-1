@@ -96,10 +96,6 @@ public abstract class AbstractHDFSRecordReader<K, V> implements IRecordReader<V>
 
     @Override
     public IRawRecord<V> next() throws IOException {
-        if(value instanceof VoidPointable){
-            if(((VoidPointable) value).getLength() <= 1)
-                return null;
-        }
         record.set(value);
         return record;
     }

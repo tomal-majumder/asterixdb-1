@@ -1,6 +1,6 @@
 package org.apache.asterix.external.input.record.reader.hdfs.shapeFile.ShxReadSupport;
 
-import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.ShpHeader;
+import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.ShpReadSupport.ShpHeader;
 
 import java.io.DataInputStream;
 import java.io.IOException;

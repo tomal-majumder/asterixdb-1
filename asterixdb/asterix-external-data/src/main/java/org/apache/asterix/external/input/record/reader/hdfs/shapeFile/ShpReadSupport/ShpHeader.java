@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.asterix.external.input.record.reader.hdfs.shapeFile;
+package org.apache.asterix.external.input.record.reader.hdfs.shapeFile.ShpReadSupport;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -63,9 +63,7 @@ public class ShpHeader implements Serializable {
     }
 
     public boolean isOverlapped(double xmin, double ymin, double xmax, double ymax) {
-        if (xmin > this.xmax || this.xmin > xmax || ymin > this.ymax || this.ymin > ymax)
-            return false;
-        return true;
+        return !(xmin > this.xmax) && !(this.xmin > xmax) && !(ymin > this.ymax) && !(this.ymin > ymax);
     }
 
 }

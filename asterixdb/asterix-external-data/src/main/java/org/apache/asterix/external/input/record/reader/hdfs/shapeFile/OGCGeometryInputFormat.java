@@ -18,10 +18,8 @@
  */
 package org.apache.asterix.external.input.record.reader.hdfs.shapeFile;
 
-// import com.esri.io.PointWritable;
-// import java.util.*;
+
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import com.esri.core.geometry.MultiPoint;
@@ -48,14 +46,10 @@ import org.apache.hyracks.api.dataflow.value.ISerializerDeserializer;
 import org.apache.hyracks.data.std.primitive.VoidPointable;
 import org.apache.hyracks.data.std.util.ArrayBackedValueStorage;
 
-// import com.esri.io.PointWritable;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.SpatialReference;
-// import com.esri.core.geometry.ogc.*;
 
 
-/**
- */
 public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable> {
     private ARecordType recordType;
     private String requestedFields;
@@ -89,48 +83,22 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
     private static final class ShapeFileReader extends AbstractShapeReader<VoidPointable> {
         private final RecordBuilder builder;
         private final ARecordType recordType;
-        private final boolean readGeometryField;
-        private final boolean readDBFFields;
-        private boolean readShxFile = false;
+
         public ShapeFileReader(InputSplit inputSplit, JobConf conf, Reporter reporter, ARecordType recordType,
                 String requestedFields, String filterMBRInfo) throws IOException, InterruptedException {
-            super(inputSplit, conf, reporter, filterMBRInfo);
+            super(inputSplit, conf, reporter, requestedFields, filterMBRInfo);
             this.recordType = recordType;
             builder = new RecordBuilder();
-            if (requestedFields == null || requestedFields.equals("")) {
-                readGeometryField = true;
-                readDBFFields = true;
-            }
-            else if(requestedFields.equals("{}")){
-                // readNumberOfRecordsFromHeaderOnly = true;
-                readShxFile = true;
-                readGeometryField = false;
-                readDBFFields = false;
-            }
-            else {
-                String[] fields = requestedFields.split(",");
-                if (requestedFields.isEmpty()) {
-                    readGeometryField = true;
-                    readDBFFields = true;
-                } else {
-                    readGeometryField = Arrays.asList(fields).contains("g");
-                    if (readGeometryField && fields.length > 1) {
-                        readDBFFields = true;
-                    } else
-                        readDBFFields = !readGeometryField;
-                }
-            }
-
         }
 
         @Override
         public boolean next(Void key, VoidPointable value) throws IOException {
+            builder.init();
+            builder.reset(this.recordType);
             if(readShxFile){
                 boolean hasMore = m_shxReader.hasMore();
                 if(!hasMore)
                     return false;
-                builder.init();
-                builder.reset(this.recordType);
                 long recordOffset = m_shxReader.readRecord();
                 ArrayBackedValueStorage nameBuffer = new ArrayBackedValueStorage();
                 ArrayBackedValueStorage valueBytes = new ArrayBackedValueStorage();
@@ -143,17 +111,15 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                 value.set(valueContainer);
                 return true;
             }
-
-            boolean hasMore = m_shpReader.hasMore();
-            if (!hasMore )
-                return false;
-            //m_shpReader.queryPoint();
-            builder.init();
-            builder.reset(this.recordType);
-            int fieldIndex;
-            boolean hasReadFully = true;
-
             if (readGeometryField) {
+                boolean hasMore = m_shpReader.hasMore();
+                if (!hasMore )
+                    return false;
+                //m_shpReader.queryPoint();
+
+                int fieldIndex;
+                boolean hasReadFully = true;
+
                 OGCGeometry geometry = null;
                 m_shpReader.readRecordHeader();
                 switch (m_shpReader.getShapeType()) {
@@ -190,6 +156,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     case 25:
                         Polygon p = new Polygon();
                         hasReadFully = m_shpReader.readNewPolygon(p);
+
                         if (hasReadFully) {
                             if (p.getExteriorRingCount() > 1) {
                                 geometry = new OGCMultiPolygon(p, SpatialReference.create(4326));
@@ -239,7 +206,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             //   Map<String, Object> map=m_dbfReader.readRecordAsMap();
             //........ DBF File reading ............
             if (readDBFFields) {
-                hasMore = m_dbfReader.hasMore();
+                boolean hasMore = m_dbfReader.hasMore();
                 if (!hasMore )
                     return false;
                 final byte dataType = m_dbfReader.nextDataType();
@@ -310,7 +277,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                                 type = BuiltinType.ANULL;
                                 break;
                         }
-                        fieldIndex = recordType.getFieldIndex(field.getFieldName());
+                        int fieldIndex = recordType.getFieldIndex(field.getFieldName());
                         if (fieldIndex < 0) {
                             //field is not defined and the type is open
                             AMutableString aString = new AMutableString(field.getFieldName());

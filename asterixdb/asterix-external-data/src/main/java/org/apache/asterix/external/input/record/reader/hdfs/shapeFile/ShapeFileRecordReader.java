@@ -20,6 +20,7 @@ package org.apache.asterix.external.input.record.reader.hdfs.shapeFile;
 
 import java.io.IOException;
 
+import org.apache.asterix.external.api.IRawRecord;
 import org.apache.asterix.external.input.record.ValueReferenceRecord;
 import org.apache.asterix.external.input.record.reader.hdfs.AbstractHDFSRecordReader;
 import org.apache.asterix.external.input.record.reader.hdfs.parquet.AsterixParquetRuntimeException;
@@ -31,6 +32,7 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hyracks.api.exceptions.IWarningCollector;
 import org.apache.hyracks.data.std.api.IValueReference;
+import org.apache.hyracks.data.std.primitive.VoidPointable;
 
 public class ShapeFileRecordReader<V extends IValueReference> extends AbstractHDFSRecordReader<Void, V> {
     private final IWarningCollector warningCollector;
@@ -54,6 +56,16 @@ public class ShapeFileRecordReader<V extends IValueReference> extends AbstractHD
     @Override
     protected boolean onNextInputSplit() throws IOException {
         return false;
+    }
+
+    @Override
+    public IRawRecord<V> next() throws IOException {
+        if(value instanceof VoidPointable){
+            if(value.getLength() <= 1)
+                return null;
+        }
+        record.set(value);
+        return record;
     }
 
     @Override
