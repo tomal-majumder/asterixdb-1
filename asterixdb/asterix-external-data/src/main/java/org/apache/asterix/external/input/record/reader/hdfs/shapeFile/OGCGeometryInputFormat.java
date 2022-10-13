@@ -18,13 +18,9 @@
  */
 package org.apache.asterix.external.input.record.reader.hdfs.shapeFile;
 
-
 import java.io.IOException;
 import java.util.List;
 
-import com.esri.core.geometry.MultiPoint;
-import com.esri.core.geometry.Polyline;
-import com.esri.core.geometry.ogc.*;
 import org.apache.asterix.builders.RecordBuilder;
 import org.apache.asterix.external.api.IDataParser;
 import org.apache.asterix.external.input.record.reader.hdfs.shapeFile.DBFReadSupport.DBFField;
@@ -46,9 +42,18 @@ import org.apache.hyracks.api.dataflow.value.ISerializerDeserializer;
 import org.apache.hyracks.data.std.primitive.VoidPointable;
 import org.apache.hyracks.data.std.util.ArrayBackedValueStorage;
 
+import com.esri.core.geometry.MultiPoint;
 import com.esri.core.geometry.Polygon;
+import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
-
+import com.esri.core.geometry.ogc.OGCGeometry;
+import com.esri.core.geometry.ogc.OGCLineString;
+import com.esri.core.geometry.ogc.OGCMultiLineString;
+import com.esri.core.geometry.ogc.OGCMultiPoint;
+import com.esri.core.geometry.ogc.OGCMultiPolygon;
+// import com.esri.core.geometry.ogc.*;
+import com.esri.core.geometry.ogc.OGCPoint;
+import com.esri.core.geometry.ogc.OGCPolygon;
 
 public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable> {
     private ARecordType recordType;
@@ -95,9 +100,9 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
         public boolean next(Void key, VoidPointable value) throws IOException {
             builder.init();
             builder.reset(this.recordType);
-            if(readShxFile){
+            if (readShxFile) {
                 boolean hasMore = m_shxReader.hasMore();
-                if(!hasMore)
+                if (!hasMore)
                     return false;
                 long recordOffset = m_shxReader.readRecord();
                 ArrayBackedValueStorage nameBuffer = new ArrayBackedValueStorage();
@@ -113,7 +118,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             }
             if (readGeometryField) {
                 boolean hasMore = m_shpReader.hasMore();
-                if (!hasMore )
+                if (!hasMore)
                     return false;
                 //m_shpReader.queryPoint();
 
@@ -133,21 +138,21 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                     case 23:
                         Polyline polyline = new Polyline();
                         hasReadFully = m_shpReader.readNewPolyline(polyline);
-                        if (hasReadFully){
-                            if(m_shpReader.getNumParts() == 1){
-                                geometry = new OGCLineString(polyline, 0 , SpatialReference.create(4326));
-                            }
-                            else{
+                        if (hasReadFully) {
+                            if (m_shpReader.getNumParts() == 1) {
+                                geometry = new OGCLineString(polyline, 0, SpatialReference.create(4326));
+                            } else {
                                 geometry = new OGCMultiLineString(polyline, SpatialReference.create(4326));
 
                             }
-                        }break;
+                        }
+                        break;
                     case 8: //MultiPoint
                     case 18: //MultiPointZ
                     case 28: //MultiPointM
                         MultiPoint multiPoint = new MultiPoint();
                         hasReadFully = m_shpReader.readNewMultiPoint(multiPoint);
-                        if(hasReadFully) {
+                        if (hasReadFully) {
                             geometry = new OGCMultiPoint(multiPoint, SpatialReference.create(4326));
                         }
                         break;
@@ -175,7 +180,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
                     ArrayBackedValueStorage valueBuffer = new ArrayBackedValueStorage();
                     ISerializerDeserializer<AGeometry> gSerde =
-                           SerializerDeserializerProvider.INSTANCE.getSerializerDeserializer(BuiltinType.AGEOMETRY);
+                            SerializerDeserializerProvider.INSTANCE.getSerializerDeserializer(BuiltinType.AGEOMETRY);
                     aGeomtry.setValue(geometry);
                     IDataParser.toBytes(aGeomtry, valueBuffer, gSerde);
 
@@ -193,8 +198,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
                         } else
                             throw new IllegalStateException("Defined type and Parsed Type do not match");
                     }
-                }
-                else{
+                } else {
                     m_dbfReader.skipBytes(m_dbfReader.getRecordLength());
                     ArrayBackedValueStorage valueContainer = new ArrayBackedValueStorage();
                     IDataParser.toBytes(ANull.NULL, valueContainer, nullSerde);
@@ -207,7 +211,7 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
             //........ DBF File reading ............
             if (readDBFFields) {
                 boolean hasMore = m_dbfReader.hasMore();
-                if (!hasMore )
+                if (!hasMore)
                     return false;
                 final byte dataType = m_dbfReader.nextDataType();
                 if (dataType != DBFType.END) {
@@ -294,8 +298,8 @@ public class OGCGeometryInputFormat extends AbstractShpInputFormat<VoidPointable
 
                         }
                     }
-                    if(m_dbfReader.getRecordLength() > m_dbfReader.getTotalFieldLength()){
-                        m_dbfReader.skipBytes(m_dbfReader.getRecordLength() - m_dbfReader.getTotalFieldLength() -1);
+                    if (m_dbfReader.getRecordLength() > m_dbfReader.getTotalFieldLength()) {
+                        m_dbfReader.skipBytes(m_dbfReader.getRecordLength() - m_dbfReader.getTotalFieldLength() - 1);
                     }
                 } else {
                     return false;

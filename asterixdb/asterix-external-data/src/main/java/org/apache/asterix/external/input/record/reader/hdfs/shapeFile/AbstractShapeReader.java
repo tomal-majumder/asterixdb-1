@@ -47,21 +47,20 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
     protected boolean readGeometryField;
     protected boolean readDBFFields;
     protected boolean readShxFile = false;
-    public AbstractShapeReader(InputSplit inputSplit, JobConf conf, Reporter reporter, String requestedFields, String filterMBRInfo)
-            throws IOException {
+
+    public AbstractShapeReader(InputSplit inputSplit, JobConf conf, Reporter reporter, String requestedFields,
+            String filterMBRInfo) throws IOException {
         //System.out.println(inputSplit instanceof FileSplit);
         if (inputSplit instanceof FileSplit) {
             if (requestedFields == null || requestedFields.equals("")) {
                 readGeometryField = true;
                 readDBFFields = true;
-            }
-            else if(requestedFields.equals("{}")){
+            } else if (requestedFields.equals("{}")) {
                 // readNumberOfRecordsFromHeaderOnly = true;
                 readShxFile = true;
                 readGeometryField = false;
                 readDBFFields = false;
-            }
-            else {
+            } else {
                 String[] fields = requestedFields.split(",");
                 if (requestedFields.isEmpty()) {
                     readGeometryField = true;
@@ -79,16 +78,16 @@ public abstract class AbstractShapeReader<T extends IValueReference> extends Abs
             final Path path = fileSplit.getPath();
             String shapePath = path.toString();
             final FileSystem fileSystem = FileSystem.get(conf);
-            if(readGeometryField){
+            if (readGeometryField) {
                 m_shpStream = fileSystem.open(path);
                 m_shpReader = new ShpReader(m_shpStream, filterMBRInfo);
             }
-            if(readDBFFields){
+            if (readDBFFields) {
                 String dbfPath = shapePath.substring(0, shapePath.lastIndexOf('.')) + ".dbf";
                 m_dfbStream = fileSystem.open(new Path(dbfPath));
                 m_dbfReader = new DBFReader(m_dfbStream);
             }
-            if(readShxFile){
+            if (readShxFile) {
                 String shxPath = shapePath.substring(0, shapePath.lastIndexOf('.')) + ".shx";
                 m_shxStream = fileSystem.open(new Path(shxPath));
                 m_shxReader = new ShxReader(m_shxStream);

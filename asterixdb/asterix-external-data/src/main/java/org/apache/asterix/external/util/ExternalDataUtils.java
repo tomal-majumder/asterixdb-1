@@ -780,7 +780,7 @@ public class ExternalDataUtils {
 
     public static void setExternalDataProjectionInfo(DataProjectionInfo projectionInfo, Map<String, String> properties)
             throws IOException {
-        if (properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE) ) {
+        if (properties.get(ExternalDataConstants.KEY_INPUT_FORMAT).equals(ExternalDataConstants.INPUT_FORMAT_SHAPE)) {
             ARecordType expectedType = projectionInfo.getProjectionInfo();
             String filterMBRInfo = projectionInfo.getFilterMBR();
             /*
@@ -798,9 +798,9 @@ public class ExternalDataUtils {
             if (expectedType == DataProjectionInfo.EMPTY_TYPE || expectedType == DataProjectionInfo.ALL_FIELDS_TYPE) {
                 //Return the type name of EMPTY_TYPE and ALL_FIELDS_TYPE
                 properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS, expectedType.getTypeName());
-            }
-            else{
-                properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS, String.join(",", expectedType.getFieldNames()));
+            } else {
+                properties.put(ExternalDataConstants.KEY_REQUESTED_FIELDS,
+                        String.join(",", expectedType.getFieldNames()));
             }
             properties.put(ExternalDataConstants.KEY_FILTER_PUSHDOWN_MBR, filterMBRInfo);
         } else {

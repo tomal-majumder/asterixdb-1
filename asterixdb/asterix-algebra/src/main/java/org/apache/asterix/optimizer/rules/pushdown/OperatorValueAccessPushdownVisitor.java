@@ -18,7 +18,13 @@
  */
 package org.apache.asterix.optimizer.rules.pushdown;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.asterix.common.config.DatasetConfig;
 import org.apache.asterix.common.metadata.DataverseName;
@@ -112,6 +118,7 @@ public class OperatorValueAccessPushdownVisitor implements ILogicalOperatorVisit
     private double yMin;
     private double xMax;
     private double yMax;
+
     public OperatorValueAccessPushdownVisitor(IOptimizationContext context) {
         this.context = context;
         builder = new ExpectedSchemaBuilder();
@@ -301,32 +308,32 @@ public class OperatorValueAccessPushdownVisitor implements ILogicalOperatorVisit
         visitInputs(op);
 
         if (isShapeFileFormat()) {
-            ArrayList<String> acceptedFunctionNames = new ArrayList<String>(
-                    Arrays.asList("st-intersects", "st-contains", "st-crosses", "st-equals", "st-overlaps", "st-touches", "st-within"));
+            ArrayList<String> acceptedFunctionNames = new ArrayList<String>(Arrays.asList("st-intersects",
+                    "st-contains", "st-crosses", "st-equals", "st-overlaps", "st-touches", "st-within"));
             ILogicalExpression logicalExpression = op.getCondition().getValue();
             if (logicalExpression instanceof ScalarFunctionCallExpression) {
                 ScalarFunctionCallExpression predicateExpression = null;
-                String functionName = ((ScalarFunctionCallExpression) logicalExpression).getFunctionIdentifier().getName();
-                if(functionName.equals("and")){
+                String functionName =
+                        ((ScalarFunctionCallExpression) logicalExpression).getFunctionIdentifier().getName();
+                if (functionName.equals("and")) {
                     List<Mutable<ILogicalExpression>> arguments =
                             ((ScalarFunctionCallExpression) logicalExpression).getArguments();
-                    for (Mutable<ILogicalExpression> e: arguments){
+                    for (Mutable<ILogicalExpression> e : arguments) {
                         ILogicalExpression argument = e.getValue();
-                        if(argument instanceof ScalarFunctionCallExpression){
-                            if(acceptedFunctionNames.contains(((ScalarFunctionCallExpression)argument).getFunctionIdentifier().getName())){
+                        if (argument instanceof ScalarFunctionCallExpression) {
+                            if (acceptedFunctionNames.contains(
+                                    ((ScalarFunctionCallExpression) argument).getFunctionIdentifier().getName())) {
                                 predicateExpression = (ScalarFunctionCallExpression) argument;
                                 break;
                             }
                         }
                     }
-                }
-                else{
-                    if(acceptedFunctionNames.contains(functionName))
+                } else {
+                    if (acceptedFunctionNames.contains(functionName))
                         predicateExpression = (ScalarFunctionCallExpression) logicalExpression;
-                 }
-                if(predicateExpression != null){
-                    List<Mutable<ILogicalExpression>> arguments =
-                            predicateExpression.getArguments();
+                }
+                if (predicateExpression != null) {
+                    List<Mutable<ILogicalExpression>> arguments = predicateExpression.getArguments();
                     for (Mutable<ILogicalExpression> e : arguments) {
                         ILogicalExpression argument = e.getValue();
                         if (argument instanceof ConstantExpression) {

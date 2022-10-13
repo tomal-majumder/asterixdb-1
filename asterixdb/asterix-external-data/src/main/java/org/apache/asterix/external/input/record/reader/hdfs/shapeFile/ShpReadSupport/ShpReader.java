@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.commons.io.EndianUtils;
+
 import com.esri.core.geometry.MultiPoint;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
@@ -50,6 +51,7 @@ public class ShpReader implements Serializable {
     private transient int numParts;
     private transient int numPoints;
     protected boolean isFilterMBRPushdown;
+
     public ShpReader(final DataInputStream dataInputStream, String filterMBRInfo) throws IOException {
         m_dataInputStream = dataInputStream;
         m_shpHeader = new ShpHeader(dataInputStream);
@@ -60,11 +62,12 @@ public class ShpReader implements Serializable {
             filterYmin = Double.parseDouble(coordinates[1]);
             filterXmax = Double.parseDouble(coordinates[2]);
             filterYmax = Double.parseDouble(coordinates[3]);
-            if(!m_shpHeader.isOverlapped(filterXmin, filterYmin, filterXmax,filterYmax)){
-                m_dataInputStream.skipBytes((m_shpHeader.fileLength *2) - 100);
+            if (!m_shpHeader.isOverlapped(filterXmin, filterYmin, filterXmax, filterYmax)) {
+                m_dataInputStream.skipBytes((m_shpHeader.fileLength * 2) - 100);
             }
         }
     }
+
     public ShpHeader getHeader() {
         return m_shpHeader;
     }
@@ -163,8 +166,6 @@ public class ShpReader implements Serializable {
         polygon.closeAllPaths();
         return true;
     }
-
-
 
     public boolean readNewPolyline(Polyline polyLine) throws IOException {
         polyLine.setEmpty();
@@ -294,7 +295,8 @@ public class ShpReader implements Serializable {
             return false;
         return true;
     }
-    public int getShapeType(){
+
+    public int getShapeType() {
         return shapeType;
     }
 

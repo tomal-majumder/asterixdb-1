@@ -60,8 +60,8 @@ public class ShapeFileRecordReader<V extends IValueReference> extends AbstractHD
 
     @Override
     public IRawRecord<V> next() throws IOException {
-        if(value instanceof VoidPointable){
-            if(value.getLength() <= 1)
+        if (value instanceof VoidPointable) {
+            if (value.getLength() <= 1)
                 return null;
         }
         record.set(value);

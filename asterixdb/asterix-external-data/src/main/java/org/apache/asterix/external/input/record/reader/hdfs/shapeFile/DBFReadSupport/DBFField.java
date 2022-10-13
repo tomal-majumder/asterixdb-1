@@ -279,14 +279,16 @@ public class DBFField implements Serializable {
         sb.append('}');
         return sb.toString();
     }
-    public int getFieldLength()
-    {
+
+    public int getFieldLength() {
         return fieldLength;
     }
-    public String getActualType(){
+
+    public String getActualType() {
         return actualType;
     }
-    public String getFieldName(){
+
+    public String getFieldName() {
         return fieldName;
     }
 }

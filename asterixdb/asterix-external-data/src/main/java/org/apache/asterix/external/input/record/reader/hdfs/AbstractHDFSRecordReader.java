@@ -29,7 +29,6 @@ import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
-import org.apache.hyracks.data.std.primitive.VoidPointable;
 
 public abstract class AbstractHDFSRecordReader<K, V> implements IRecordReader<V> {
     protected RecordReader<K, V> reader;
